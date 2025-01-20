@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+/// @title Copyright Management Smart Contract
+/// @author 
+/// @notice This contract manages copyright registration, ownership, and licensing
+contract CopyrightManager {
+    struct Copyright {
+        string workName;
+        string ipfsHash; // Hash pointing to the work's metadata (stored off-chain)
+        address owner;
+        uint256 registrationDate;
+    }
+
+    struct License {
+        address licensee;
+        uint256 price;
+        uint256 startDate;
+        uint256 endDate;
+    }
+
+    mapping(uint256 => Copyright) public copyrights;
+    mapping(uint256 => License[]) public licenses;
+
+    uint256 private nextCopyrightId;
+
+    event CopyrightRegistered(
+        uint256 indexed copyrightId,
+        string workName,
+        address indexed owner,
+        uint256 registrationDate
+    );
+
+    event LicenseGranted(
+        uint256 indexed copyrightId,
+        address indexed licensee,
+        uint256 price,
+        uint256 startDate,
+        uint256 endDate
+    );
+
+    /// @notice Register a new work for copyright protection
+    /// @param workName Name of the work
+    /// @param ipfsHash IPFS hash of the metadata
+    function registerCopyright(string memory workName, string memory ipfsHash) external {
+        require(bytes(workName).length > 0, "Work name cannot be empty");
+        require(bytes(ipfsHash).length > 0, "IPFS hash cannot be empty");
+
+        uint256 copyrightId = nextCopyrightId++;
+        copyrights[copyrightId] = Copyright({
+            workName: workName,
+            ipfsHash: ipfsHash,
+            owner: msg.sender,
+            registrationDate: block.timestamp
+        });
+
+        emit CopyrightRegistered(copyrightId, workName, msg.sender, block.timestamp);
+    }
+
+    /// @notice Grant a license to use the copyrighted work
+    /// @param copyrightId ID of the copyrighted work
+    /// @param licensee Address of the licensee
+    /// @param price Payment required for the license
+    /// @param duration Duration of the license in seconds
+    function grantLicense(
+        uint256 copyrightId,
+        address licensee,
+        uint256 price,
+        uint256 duration
+    ) external {
+        require(copyrightId < nextCopyrightId, "Invalid copyright ID");
+        require(msg.sender == copyrights[copyrightId].owner, "Only the owner can grant licenses");
+        require(licensee != address(0), "Licensee cannot be the zero address");
+        require(duration > 0, "License duration must be greater than zero");
+
+        License memory newLicense = License({
+            licensee: licensee,
+            price: price,
+            startDate: block.timestamp,
+            endDate: block.timestamp + duration
+        });
+
+        licenses[copyrightId].push(newLicense);
+
+        emit LicenseGranted(copyrightId, licensee, price, newLicense.startDate, newLicense.endDate);
+    }
+
+    /// @notice Get all licenses for a given copyright
+    /// @param copyrightId ID of the copyrighted work
+    /// @return Array of License structs
+    function getLicenses(uint256 copyrightId) external view returns (License[] memory) {
+        return licenses[copyrightId];
+    }
+
+    /// @notice Transfer copyright ownership to another address
+    /// @param copyrightId ID of the copyrighted work
+    /// @param newOwner Address of the new owner
+    function transferOwnership(uint256 copyrightId, address newOwner) external {
+        require(copyrightId < nextCopyrightId, "Invalid copyright ID");
+        require(msg.sender == copyrights[copyrightId].owner, "Only the owner can transfer ownership");
+        require(newOwner != address(0), "New owner cannot be the zero address");
+
+        copyrights[copyrightId].owner = newOwner;
+    }
+}
