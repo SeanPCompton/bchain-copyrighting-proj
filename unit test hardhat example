@@ -1,0 +1,34 @@
+const { expect } = require("chai");
+
+describe("CopyrightManager", function () {
+    let CopyrightManager, copyrightManager, owner, licensee;
+
+    beforeEach(async function () {
+        [owner, licensee] = await ethers.getSigners();
+        CopyrightManager = await ethers.getContractFactory("CopyrightManager");
+        copyrightManager = await CopyrightManager.deploy();
+        await copyrightManager.deployed();
+    });
+
+    it("Should register a new copyright", async function () {
+        await copyrightManager.registerCopyright("My Book", "ipfsHash123");
+        const copyright = await copyrightManager.copyrights(0);
+        expect(copyright.workName).to.equal("My Book");
+        expect(copyright.owner).to.equal(owner.address);
+    });
+
+    it("Should allow the owner to grant a license", async function () {
+        await copyrightManager.registerCopyright("My Book", "ipfsHash123");
+        await copyrightManager.grantLicense(0, licensee.address, 1, 3600);
+        const licenses = await copyrightManager.getLicenses(0);
+        expect(licenses.length).to.equal(1);
+        expect(licenses[0].licensee).to.equal(licensee.address);
+    });
+
+    it("Should not allow non-owners to grant licenses", async function () {
+        await copyrightManager.registerCopyright("My Book", "ipfsHash123");
+        await expect(
+            copyrightManager.connect(licensee).grantLicense(0, licensee.address, 1, 3600)
+        ).to.be.revertedWith("Only the owner can grant licenses");
+    });
+});
