@@ -1,0 +1,8 @@
+function bid() public payable {
+    require(msg.value > highestBid, "Bid not high enough");
+    if (highestBid != 0) {
+        payable(highestBidder).transfer(highestBid); // Refund previous bid
+    }
+    highestBidder = msg.sender;
+    highestBid = msg.value;
+}
