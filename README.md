@@ -1,7 +1,7 @@
 
 later...could expand it, ie integrating payment system like ERC-20 tokens for license fees?
 
-
+From Cyfrin course work adapted
 Register Copyright:
 
 Creators can register a new work by providing its name and an IPFS hash pointing to its metadata.
