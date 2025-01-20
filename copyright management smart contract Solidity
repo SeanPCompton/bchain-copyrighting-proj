@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/// @title Copyright Management Smart Contract
-/// @author 
-/// @notice This contract manages copyright registration, ownership, and licensing
+/// @title Copyright Manager
+/// @dev This contract helps to register and manage copyrights, and grant licenses
 contract CopyrightManager {
     struct Copyright {
         string workName;
-        string ipfsHash; // Hash pointing to the work's metadata (stored off-chain)
+        string ipfsHash; // Hash pointing to the work's metadata
         address owner;
         uint256 registrationDate;
     }
@@ -21,7 +20,7 @@ contract CopyrightManager {
 
     mapping(uint256 => Copyright) public copyrights;
     mapping(uint256 => License[]) public licenses;
-
+    
     uint256 private nextCopyrightId;
 
     event CopyrightRegistered(
@@ -39,12 +38,10 @@ contract CopyrightManager {
         uint256 endDate
     );
 
-    /// @notice Register a new work for copyright protection
-    /// @param workName Name of the work
-    /// @param ipfsHash IPFS hash of the metadata
+    // Register a new work
     function registerCopyright(string memory workName, string memory ipfsHash) external {
-        require(bytes(workName).length > 0, "Work name cannot be empty");
-        require(bytes(ipfsHash).length > 0, "IPFS hash cannot be empty");
+        require(bytes(workName).length > 0, "Work name can't be empty");
+        require(bytes(ipfsHash).length > 0, "IPFS hash can't be empty");
 
         uint256 copyrightId = nextCopyrightId++;
         copyrights[copyrightId] = Copyright({
@@ -57,11 +54,7 @@ contract CopyrightManager {
         emit CopyrightRegistered(copyrightId, workName, msg.sender, block.timestamp);
     }
 
-    /// @notice Grant a license to use the copyrighted work
-    /// @param copyrightId ID of the copyrighted work
-    /// @param licensee Address of the licensee
-    /// @param price Payment required for the license
-    /// @param duration Duration of the license in seconds
+    // Grant a license for a copyrighted work
     function grantLicense(
         uint256 copyrightId,
         address licensee,
@@ -69,9 +62,9 @@ contract CopyrightManager {
         uint256 duration
     ) external {
         require(copyrightId < nextCopyrightId, "Invalid copyright ID");
-        require(msg.sender == copyrights[copyrightId].owner, "Only the owner can grant licenses");
-        require(licensee != address(0), "Licensee cannot be the zero address");
-        require(duration > 0, "License duration must be greater than zero");
+        require(msg.sender == copyrights[copyrightId].owner, "You must be the owner to grant a license");
+        require(licensee != address(0), "Invalid licensee address");
+        require(duration > 0, "Duration must be greater than zero");
 
         License memory newLicense = License({
             licensee: licensee,
@@ -85,20 +78,16 @@ contract CopyrightManager {
         emit LicenseGranted(copyrightId, licensee, price, newLicense.startDate, newLicense.endDate);
     }
 
-    /// @notice Get all licenses for a given copyright
-    /// @param copyrightId ID of the copyrighted work
-    /// @return Array of License structs
+    // Get all licenses for a specific copyright
     function getLicenses(uint256 copyrightId) external view returns (License[] memory) {
         return licenses[copyrightId];
     }
 
-    /// @notice Transfer copyright ownership to another address
-    /// @param copyrightId ID of the copyrighted work
-    /// @param newOwner Address of the new owner
+    // Transfer ownership of a copyrighted work
     function transferOwnership(uint256 copyrightId, address newOwner) external {
         require(copyrightId < nextCopyrightId, "Invalid copyright ID");
-        require(msg.sender == copyrights[copyrightId].owner, "Only the owner can transfer ownership");
-        require(newOwner != address(0), "New owner cannot be the zero address");
+        require(msg.sender == copyrights[copyrightId].owner, "You must be the owner to transfer");
+        require(newOwner != address(0), "New owner address can't be the zero address");
 
         copyrights[copyrightId].owner = newOwner;
     }
