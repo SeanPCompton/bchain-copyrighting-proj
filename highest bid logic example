@@ -6,3 +6,8 @@ function bid() public payable {
     highestBidder = msg.sender;
     highestBid = msg.value;
 }
+
+
+//require(block.timestamp < auctionEnd, "Auction has ended");
+//Time-Limited Auctions:
+//Use block.timestamp to set start and end times
