@@ -1,0 +1,31 @@
+mapping(address => bool) public isAdmin;
+
+modifier onlyAdmin() {
+    require(isAdmin[msg.sender], "Not an admin");
+    _;
+}
+
+function grantAdmin(address user) public onlyAdmin {
+    isAdmin[user] = true;
+}
+
+//Admin and User Roles:
+//Use mapping(address => bool) for role permissions
+
+
+//Single Owner?
+/*address public owner;
+
+modifier onlyOwner() {
+    require(msg.sender == owner, "Not the owner");
+    _;
+}
+
+constructor() {
+    owner = msg.sender;
+}
+
+function transferOwnership(address newOwner) public onlyOwner {
+    owner = newOwner;
+}
+*/
